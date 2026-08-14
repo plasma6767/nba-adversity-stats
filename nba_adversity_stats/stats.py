@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Callable
+
 from nba_adversity_stats.data import get_play_by_play, get_season_game_ids
 from nba_adversity_stats.events import (
     ADVERSITY_TYPES,
@@ -37,18 +39,26 @@ def _pct_diff(post: float | None, baseline: float | None) -> float | None:
     return post - baseline
 
 
-def compute_player_adversity_stats(player_id: int, season: str) -> dict:
+def compute_player_adversity_stats(
+    player_id: int,
+    season: str,
+    on_progress: Callable[[int, int], None] | None = None,
+) -> dict:
     """Pull every game a player played in a season and compute their FG%/3PT%
-    on the next shot after each of the six adversity types, versus their
-    baseline shooting (every other shot that season -- see events.py for why
-    baseline excludes any shot that's already someone else's post-adversity
-    next-shot)."""
+    on the next shot after each adversity type, versus their baseline
+    shooting (every other shot that season -- see events.py for why baseline
+    excludes any shot that's already someone else's post-adversity
+    next-shot).
+
+    If given, on_progress(games_done, games_total) is called after each game
+    is processed -- games can take a while to fetch on a first (uncached) run.
+    """
     game_ids = get_season_game_ids(player_id, season)
 
     baseline_shots: list[dict] = []
     per_type_shots: dict[str, list[dict]] = {t: [] for t in ADVERSITY_TYPES}
 
-    for game_id in game_ids:
+    for i, game_id in enumerate(game_ids):
         events = get_play_by_play(game_id)
         all_shots = find_all_shots(events, player_id)
         adversity_events = find_adversity_events(events, player_id)
@@ -62,6 +72,9 @@ def compute_player_adversity_stats(player_id: int, season: str) -> dict:
             claimed_sequences.add(shot["sequence"])
 
         baseline_shots.extend(s for s in all_shots if s["sequence"] not in claimed_sequences)
+
+        if on_progress is not None:
+            on_progress(i + 1, len(game_ids))
 
     baseline = _shot_pool_stats(baseline_shots)
 

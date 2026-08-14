@@ -47,12 +47,13 @@ def _get_connection() -> sqlite3.Connection:
     return conn
 
 
-def find_player_id(name: str) -> int | None:
-    """Resolve a player name (any case, partial match ok) to their player ID."""
+def find_players(name: str) -> list[dict]:
+    """All players matching a name search (substring match against the NBA's
+    full-name list -- e.g. "curry" matches Stephen, Seth, Dell, and Eddy
+    Curry all at once, so callers must handle more than one result rather
+    than silently grabbing the first). Active players are sorted first."""
     matches = players.find_players_by_full_name(name)
-    if not matches:
-        return None
-    return matches[0]["id"]
+    return sorted(matches, key=lambda m: not m["is_active"])
 
 
 def get_season_game_ids(player_id: int, season: str) -> list[str]:
