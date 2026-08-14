@@ -1,11 +1,11 @@
+from conftest import ev
+
 from nba_adversity_stats.events import (
     classify_adversity,
     find_adversity_events,
     find_all_shots,
     find_next_shot,
 )
-
-from conftest import ev
 
 
 def test_classify_adversity_missed_shot():
