@@ -38,6 +38,7 @@ def _get_connection() -> sqlite3.Connection:
             person_id INTEGER,
             player_name TEXT,
             team_id INTEGER,
+            shot_value INTEGER,
             description TEXT,
             PRIMARY KEY (game_id, sequence)
         )
@@ -71,6 +72,7 @@ _ROW_FIELDS = (
     "person_id",
     "player_name",
     "team_id",
+    "shot_value",
     "description",
 )
 
@@ -112,6 +114,7 @@ def get_play_by_play(game_id: str) -> list[dict]:
             "person_id": a["personId"] or None,
             "player_name": a["playerName"] or None,
             "team_id": a["teamId"] or None,
+            "shot_value": a["shotValue"] or None,
             "description": a["description"],
         }
         for i, a in enumerate(actions)
