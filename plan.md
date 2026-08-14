@@ -66,13 +66,16 @@ Same underlying data real box scores are built from, so results can be checked b
 6. Aggregate across all games, per adversity type: post-adversity FG% and 3PT% vs. baseline FG%/3PT% (Phase 1: all his other shots; Phase 2: situation-matched shots)
 7. Report the percentage-point difference per adversity type, along with sample size, so low-sample numbers are visibly flagged rather than presented as solid
 
-## CLI usage (target)
+## CLI usage
 
 ```
-adversity "luka doncic"
+$ adversity
+Please enter a player's name to see their adversity stats: luka doncic
 ```
 
-Output: for each of the three adversity types, his FG% and 3PT% on the next shot after that event, his normal FG%/3PT% for comparison, and the sample size behind each number.
+A name can also be passed directly (`adversity "luka doncic"`), and `--season "2023-24"` overrides the default season. If a name matches more than one player (e.g. "curry"), the CLI lists all matches and asks which one you meant rather than guessing.
+
+Output: for each of the three adversity types, FG% and 3PT% on the next shot after that event, normal FG%/3PT% for comparison, and the sample size behind each number — numbers built on fewer than 20 shots are flagged as a small sample.
 
 ## Scope for v1
 
