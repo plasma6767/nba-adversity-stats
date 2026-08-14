@@ -105,3 +105,16 @@ def find_next_shot(events: list[dict], player_id: int, after_sequence: int) -> d
             "shot_value": event["shot_value"],
         }
     return None
+
+
+def find_all_shots(events: list[dict], player_id: int) -> list[dict]:
+    """Every field goal attempt by this player in a game, in order."""
+    return [
+        {
+            "sequence": event["sequence"],
+            "made": event["action_type"] == MADE_SHOT,
+            "shot_value": event["shot_value"],
+        }
+        for event in events
+        if event["person_id"] == player_id and event["action_type"] in (MADE_SHOT, MISSED_SHOT)
+    ]
