@@ -10,15 +10,14 @@ Goal is to build the most defensible version of this stat possible, not just a f
 
 ## Definitions
 
-**Adversity events (v1), six types:**
+**Adversity events (v1), three types:**
 - Turnover
 - Missed shot (field goal misses only, not free throws)
-- Offensive foul (charge-type fouls, committed while on offense)
-- Defensive foul (personal/shooting/loose-ball/etc., committed while defending)
-- Flagrant foul
-- Technical foul
+- Foul (any sub-type the player commits — offensive, defensive, flagrant, technical, all merged into one category)
 
-Only fouls the player *commits* count — never fouls committed against them. Verified against real play-by-play: an offensive foul (and, in at least one case, a flagrant) generates a companion `Turnover` row for bookkeeping purposes (NBA labels it `"Offensive Foul Turnover"`). That companion row must be excluded from turnover-detection, or the same physical play gets double-counted as two separate adversity events.
+Only fouls the player *commits* count — never fouls committed against them. We initially split fouls into offensive/defensive/flagrant/technical, but per-subtype sample sizes checked against a real season were too small to be reliable on their own (offensive foul n=6, flagrant n=0, technical n=14 for one full season, versus a solid n=133 for defensive foul alone) — merged into one "foul" category for v1 instead. That merge also fixed a real bug: the split version required an exhaustive list of foul sub-types, and a real one ("Double Technical," called on both teams after an altercation) wasn't in the list and was silently dropped from adversity detection. The merged version can't miss a sub-type since it doesn't filter on sub-type at all.
+
+Verified against real play-by-play: an offensive foul (and, in at least one case, a flagrant) generates a companion `Turnover` row for bookkeeping purposes (NBA labels it `"Offensive Foul Turnover"`). That companion row must be excluded from turnover-detection, or the same physical play gets double-counted as both a turnover and a foul.
 
 **What we measure = shooting only.** The very next *field goal attempt* (2 or 3 pointer, make or miss) by that player after the adversity event — skipping over anything in between that isn't a shot (turnovers, fouls, free throws, other players' actions). Not the literal next thing that happens, specifically the next shot.
 
@@ -61,7 +60,7 @@ Same underlying data real box scores are built from, so results can be checked b
 
 1. Resolve player name → player ID (fuzzy match, handles typos/partial names)
 2. Pull that player's games for the season — from cache if we have it, from `nba_api` if not
-3. Walk each game's play-by-play in order (using a cleaned, de-duplicated version of the event list — see companion-row note above), tag every adversity event (turnover, missed shot, or one of the four foul types) belonging to that player
+3. Walk each game's play-by-play in order (using a cleaned, de-duplicated version of the event list — see companion-row note above), tag every adversity event (turnover, missed shot, or foul) belonging to that player
 4. For each tagged event, find the player's next field goal attempt, whatever else happens first
 5. Record whether it was a make or miss, and whether it was a 2 or a 3
 6. Aggregate across all games, per adversity type: post-adversity FG% and 3PT% vs. baseline FG%/3PT% (Phase 1: all his other shots; Phase 2: situation-matched shots)
@@ -73,7 +72,7 @@ Same underlying data real box scores are built from, so results can be checked b
 adversity "luka doncic"
 ```
 
-Output: for each of the six adversity types, his FG% and 3PT% on the next shot after that event, his normal FG%/3PT% for comparison, and the sample size behind each number.
+Output: for each of the three adversity types, his FG% and 3PT% on the next shot after that event, his normal FG%/3PT% for comparison, and the sample size behind each number.
 
 ## Scope for v1
 
@@ -83,6 +82,6 @@ Output: for each of the six adversity types, his FG% and 3PT% on the next shot a
 
 ## Open items / risks
 
-- Sample size per player per adversity type could still end up thin for some of the rarer types (flagrant, technical) even with the next-shot approach — won't know until we see real numbers
+- 3PT% specifically could still end up thin for the foul category for some players even after merging (only shots that happen to be 3-pointers count toward that number) — worth watching once we run this on more players
 - Phase 2's situation-matching will thin the sample further; may need to be judicious about how many context dimensions we match on
 - Rate limiting from stats.nba.com may require deliberate delays between calls on first pull

@@ -7,19 +7,6 @@ MISSED_SHOT = "Missed Shot"
 TURNOVER = "Turnover"
 FOUL = "Foul"
 
-OFFENSIVE_FOUL_SUBTYPES = {"Offensive", "Offensive Charge"}
-DEFENSIVE_FOUL_SUBTYPES = {
-    "Shooting",
-    "Personal",
-    "Personal Take",
-    "Transition Take",
-    "Loose Ball",
-    "Away From Play",
-    "Defense 3 Second",
-}
-FLAGRANT_FOUL_SUBTYPES = {"Flagrant Type 1", "Flagrant Type 2"}
-TECHNICAL_FOUL_SUBTYPE = "Technical"
-
 # A Turnover row with this sub_type is the NBA's bookkeeping companion to
 # a Foul row for the same player/instant (verified against real data:
 # every Offensive/Offensive Charge/Flagrant foul that costs the offense
@@ -28,26 +15,14 @@ TECHNICAL_FOUL_SUBTYPE = "Technical"
 # physical play double-counts as two adversity events.
 COMPANION_TURNOVER_SUBTYPE = "Offensive Foul Turnover"
 
+# v1: all foul sub-types (offensive, defensive, flagrant, technical) are
+# grouped into one "foul" category -- per-subtype sample sizes (checked
+# against a real season) were too small on their own to be reliable.
 ADVERSITY_TYPES = (
     "turnover",
     "missed_shot",
-    "offensive_foul",
-    "defensive_foul",
-    "flagrant_foul",
-    "technical_foul",
+    "foul",
 )
-
-
-def classify_foul(sub_type: str) -> str | None:
-    if sub_type in OFFENSIVE_FOUL_SUBTYPES:
-        return "offensive_foul"
-    if sub_type in DEFENSIVE_FOUL_SUBTYPES:
-        return "defensive_foul"
-    if sub_type in FLAGRANT_FOUL_SUBTYPES:
-        return "flagrant_foul"
-    if sub_type == TECHNICAL_FOUL_SUBTYPE:
-        return "technical_foul"
-    return None
 
 
 def classify_adversity(event: dict) -> str | None:
@@ -59,7 +34,7 @@ def classify_adversity(event: dict) -> str | None:
     if event["action_type"] == MISSED_SHOT:
         return "missed_shot"
     if event["action_type"] == FOUL:
-        return classify_foul(event["sub_type"])
+        return "foul"
     return None
 
 
