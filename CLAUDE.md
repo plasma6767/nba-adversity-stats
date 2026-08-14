@@ -7,14 +7,14 @@ Full design history and rationale lives in `plan.md` at the repo root — read i
 ## Commands (verified working from a clean install)
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
+/opt/homebrew/bin/python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"   # installs nba_api, pytest, ruff
 pytest                     # 23 tests, no network calls, runs in <1s
 ruff check .                # lint
 adversity                   # run the CLI (prompts for a player name)
 ```
 
-Only Python available on this machine is the system Python (3.9.6) — there is no newer interpreter installed. The project targets 3.9 deliberately; don't use syntax that requires 3.10+ without `from __future__ import annotations` at the top of the file (see Gotchas).
+This machine has two Pythons: Apple's built-in system one at `/usr/bin/python3` (3.9.6), and a real one installed via Homebrew at `/opt/homebrew/bin/python3` (3.14+). **Use the Homebrew one for the venv** — the system Python is linked against LibreSSL instead of OpenSSL, which made `urllib3`/`requests` print a compatibility warning on every run. Installing a real Python fixed that at the root instead of just silencing the message. The package itself still declares `requires-python = ">=3.9"` and ruff still targets `py39` syntax deliberately, so don't use syntax that requires newer than 3.10 without `from __future__ import annotations` at the top of the file (see Gotchas) — that floor is a compatibility choice, not a statement about what's installed here.
 
 `adversity "player name"` also works directly (skips the prompt). `--season "2023-24"` overrides the default season (auto-computed from today's date).
 
