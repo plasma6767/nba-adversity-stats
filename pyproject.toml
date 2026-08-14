@@ -1,0 +1,31 @@
+[project]
+name = "nba-adversity-stats"
+version = "0.1.0"
+description = "CLI tool measuring NBA player performance immediately after adversity events (turnovers, missed shots, fouls)"
+requires-python = ">=3.9"
+dependencies = [
+    "nba_api>=1.4.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+]
+
+[project.scripts]
+adversity = "nba_adversity_stats.cli:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["nba_adversity_stats*"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
