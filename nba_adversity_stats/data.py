@@ -13,7 +13,7 @@ import sqlite3
 import time
 from pathlib import Path
 
-from nba_api.stats.endpoints import playbyplayv3, playergamelog
+from nba_api.stats.endpoints import playbyplayv3, playercareerstats, playergamelog
 from nba_api.stats.static import players
 
 CACHE_PATH = Path(__file__).resolve().parent.parent / "cache.db"
@@ -54,6 +54,17 @@ def find_players(name: str) -> list[dict]:
     than silently grabbing the first). Active players are sorted first."""
     matches = players.find_players_by_full_name(name)
     return sorted(matches, key=lambda m: not m["is_active"])
+
+
+def get_career_seasons(player_id: int) -> list[str]:
+    """Every season (e.g. '2003-04') a player has official regular-season
+    totals for, chronological order. Pulled fresh every call, not cached --
+    unlike play-by-play for a finished game, a season list can gain a new
+    entry the moment the current season starts, so caching it risks serving
+    a stale "whole career" that's missing the season in progress."""
+    career = playercareerstats.PlayerCareerStats(player_id=player_id)
+    rows = career.get_normalized_dict()["SeasonTotalsRegularSeason"]
+    return sorted({row["SEASON_ID"] for row in rows})
 
 
 def get_season_game_ids(player_id: int, season: str) -> list[str]:
