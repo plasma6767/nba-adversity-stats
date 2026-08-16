@@ -41,19 +41,20 @@ def _pct_diff(post: float | None, baseline: float | None) -> float | None:
 
 def compute_player_adversity_stats(
     player_id: int,
-    season: str,
+    seasons: list[str],
     on_progress: Callable[[int, int], None] | None = None,
 ) -> dict:
-    """Pull every game a player played in a season and compute their FG%/3PT%
-    on the next shot after each adversity type, versus their baseline
-    shooting (every other shot that season -- see events.py for why baseline
-    excludes any shot that's already someone else's post-adversity
-    next-shot).
+    """Pull every game a player played across the given seasons (a single
+    season, or their whole career's worth of season strings) and compute
+    their FG%/3PT% on the next shot after each adversity type, versus their
+    baseline shooting (every other shot across those seasons -- see events.py
+    for why baseline excludes any shot that's already someone else's
+    post-adversity next-shot).
 
     If given, on_progress(games_done, games_total) is called after each game
     is processed -- games can take a while to fetch on a first (uncached) run.
     """
-    game_ids = get_season_game_ids(player_id, season)
+    game_ids = [game_id for season in seasons for game_id in get_season_game_ids(player_id, season)]
 
     baseline_shots: list[dict] = []
     per_type_shots: dict[str, list[dict]] = {t: [] for t in ADVERSITY_TYPES}
@@ -87,7 +88,7 @@ def compute_player_adversity_stats(
 
     return {
         "player_id": player_id,
-        "season": season,
+        "seasons": seasons,
         "games_played": len(game_ids),
         "baseline": baseline,
         "adversity": adversity_stats,

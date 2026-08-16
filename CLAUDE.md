@@ -16,7 +16,7 @@ adversity                   # run the CLI (prompts for a player name)
 
 This machine has two Pythons: Apple's built-in system one at `/usr/bin/python3` (3.9.6), and a real one installed via Homebrew at `/opt/homebrew/bin/python3` (3.14+). **Use the Homebrew one for the venv** — the system Python is linked against LibreSSL instead of OpenSSL, which made `urllib3`/`requests` print a compatibility warning on every run. Installing a real Python fixed that at the root instead of just silencing the message. The package itself still declares `requires-python = ">=3.9"` and ruff still targets `py39` syntax deliberately, so don't use syntax that requires newer than 3.10 without `from __future__ import annotations` at the top of the file (see Gotchas) — that floor is a compatibility choice, not a statement about what's installed here.
 
-`adversity "player name"` also works directly (skips the prompt). `--season "2023-24"` overrides the default season (auto-computed from today's date).
+`adversity "player name"` also works directly (skips the name prompt). Either way, every run then asks whether to pull the player's whole career or one season — picking "one season" shows a numbered list of that player's real seasons (pulled live from `data.get_career_seasons`) to choose from, so there's no free-text season string to typo.
 
 ## Architecture
 
@@ -24,7 +24,7 @@ Four files, each with one job, in a strict pipeline:
 
 - **`data.py`** — the only file that talks to the network or disk. Wraps `nba_api` (pulls from stats.nba.com) and a local SQLite cache (`cache.db`, gitignored). Nothing else in the codebase should import `nba_api` directly.
 - **`events.py`** — pure logic, zero I/O. Takes a list of play-by-play event dicts (the shape `data.py` produces) and a player ID; returns adversity events and next-shot outcomes. Deliberately has no dependency on `data.py` so it can be tested with fake, hand-built event lists instead of live API calls — that's what `tests/test_events.py` does.
-- **`stats.py`** — aggregates `events.py`'s output across a whole season into FG%/3PT% numbers, post-adversity vs. baseline, with sample sizes.
+- **`stats.py`** — aggregates `events.py`'s output across one or more seasons (a single season, or a player's whole career) into FG%/3PT% numbers, post-adversity vs. baseline, with sample sizes.
 - **`cli.py`** — the only file that prints to the terminal or reads `input()`. Wires the other three together; contains no computation logic of its own.
 
 Keep this separation. If you're tempted to add a `print()` inside `stats.py` or `events.py`, or an `nba_api` import outside `data.py`, that's a sign the change belongs in a different file.
@@ -38,6 +38,7 @@ Keep this separation. If you're tempted to add a `print()` inside `stats.py` or 
 - **Baseline excludes any shot already claimed as someone else's post-adversity next-shot** (not a flat season average) — otherwise the comparison group partly contains the thing being measured. This is "Phase 1" of the baseline design; "Phase 2" (matching by score margin/quarter/opponent) is designed in `plan.md` but not built yet.
 - **20 shots is the small-sample cutoff** in the CLI's display — numbers built on fewer are flagged, not hidden.
 - **`ruff` line-length is 120, not the 88 default** — deliberately widened after checking real findings; most were descriptive f-strings/comments, not actual code smell.
+- **`data.get_career_seasons` is never cached**, unlike play-by-play. A finished game's play-by-play can't change, so caching it forever is safe; a player's season list can gain a new entry the moment a new season starts, so caching it risks silently serving a "whole career" that's missing the season in progress. Considered and rejected — see plan.md.
 
 ## Gotchas (all found by testing against real data, not theoretical)
 
