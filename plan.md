@@ -73,7 +73,9 @@ $ adversity
 Please enter a player's name to see their adversity stats: luka doncic
 ```
 
-A name can also be passed directly (`adversity "luka doncic"`), and `--season "2023-24"` overrides the default season. If a name matches more than one player (e.g. "curry"), the CLI lists all matches and asks which one you meant rather than guessing.
+A name can also be passed directly (`adversity "luka doncic"`), which skips only the name prompt. If a name matches more than one player (e.g. "curry"), the CLI lists all matches and asks which one you meant rather than guessing.
+
+Either way, once the player is resolved the CLI always asks whether to pull their whole career or one season. Choosing "one season" shows a numbered list of that player's real seasons (pulled live from the NBA's own career-totals data, not guessed from a year range) to pick from — no free-text season string to typo. Choosing "career" pools every season into one aggregate. Career pulls warn up front if they'll take a while (one play-by-play fetch per game, across every season, on a first uncached run — LeBron's 23-season career is worst-case ~20 minutes the first time; instant on repeat runs since play-by-play is cached forever per game).
 
 Output: for each of the three adversity types, FG% and 3PT% on the next shot after that event, normal FG%/3PT% for comparison, and the sample size behind each number — numbers built on fewer than 20 shots are flagged as a small sample.
 
@@ -88,3 +90,4 @@ Output: for each of the three adversity types, FG% and 3PT% on the next shot aft
 - 3PT% specifically could still end up thin for the foul category for some players even after merging (only shots that happen to be 3-pointers count toward that number) — worth watching once we run this on more players
 - Phase 2's situation-matching will thin the sample further; may need to be judicious about how many context dimensions we match on
 - Rate limiting from stats.nba.com may require deliberate delays between calls on first pull
+- **Career-mode pull speed (decided 2026-08-15):** a full-career pull for a long-tenured player is a real wait on a first (uncached) run — e.g. LeBron's 23 seasons, worst case, is roughly 20 minutes. Considered and explicitly rejected for now: a hosted shared cache (so any machine benefits from any prior pull) and a full server/API layer (centralizes rate-limiting, sets up a future web front-end). Both add real infra (hosting, credentials, uptime) for a cost that's one-time per player per machine — repeat lookups are already instant via the existing local `cache.db`. Decision: accept the wait, make it honest with a clear warning + progress indicator (see `cli.py`'s `LONG_CAREER_WARNING_SEASONS`), and only revisit hosting/sharing if this becomes a recurring real-world pain (e.g. once demoed to other people regularly).
