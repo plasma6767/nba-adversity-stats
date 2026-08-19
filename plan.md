@@ -43,7 +43,7 @@ Turnovers and fouls don't happen randomly — they cluster against good defenses
 Same underlying data real box scores are built from, so results can be checked by hand.
 
 **Real gotchas found and fixed while building the data layer:**
-- System Python here is 3.9 — modern `int | None` type hints need `from __future__ import annotations` at the top of the file, or they crash.
+- The project's minimum supported Python is 3.9 — modern `int | None` type hints need `from __future__ import annotations` at the top of the file on 3.9, or they crash.
 - The API's `actionNumber` field is not a unique or reliable sort key — some plays emit two rows sharing one actionNumber (a missed shot + the block that caused it, a turnover + the steal that caused it). Using it as a cache key silently drops rows. Fixed by keying on each event's actual position in the API's response array instead (`sequence`).
 - Some rows (blocks, steals) have a blank `action_type` entirely — the only way to identify them at all is the free-text `description` field. Not used in v1 since blocks/steals aren't tracked, but worth remembering if that changes later.
 - `shotValue` (2 or 3) and `shotResult` ("Made"/"Missed") are clean, reliable fields on shot-attempt rows — confirmed against real data, no text-parsing needed for shot classification.

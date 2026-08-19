@@ -1,20 +1,20 @@
 # nba-adversity-stats
 
-A CLI tool that measures how an NBA player shoots in the play right after adversity (a turnover, a missed shot, or a foul they commit on someone else) versus how they normally shoot. The goal, per the project owner, is "the most undeniable data possible" — every design decision below was chosen for defensibility over speed of building, so don't casually simplify things back without understanding why they're built the way they are (see "Conventions" below).
+A CLI tool that measures how an NBA player shoots in the play right after adversity (a turnover, a missed shot, or a foul they commit on someone else) versus how they normally shoot. Every design decision below was chosen for defensibility over speed of building, so don't casually simplify things back without understanding why they're built the way they are (see "Conventions" below).
 
 Full design history and rationale lives in `plan.md` at the repo root — read it before making non-trivial changes. This file is the fast-reference version.
 
 ## Commands (verified working from a clean install)
 
 ```bash
-/opt/homebrew/bin/python3 -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"   # installs nba_api, pytest, ruff
 pytest                     # 23 tests, no network calls, runs in <1s
 ruff check .                # lint
 adversity                   # run the CLI (prompts for a player name)
 ```
 
-This machine has two Pythons: Apple's built-in system one at `/usr/bin/python3` (3.9.6), and a real one installed via Homebrew at `/opt/homebrew/bin/python3` (3.14+). **Use the Homebrew one for the venv** — the system Python is linked against LibreSSL instead of OpenSSL, which made `urllib3`/`requests` print a compatibility warning on every run. Installing a real Python fixed that at the root instead of just silencing the message. The package itself still declares `requires-python = ">=3.9"` and ruff still targets `py39` syntax deliberately, so don't use syntax that requires newer than 3.10 without `from __future__ import annotations` at the top of the file (see Gotchas) — that floor is a compatibility choice, not a statement about what's installed here.
+Requires Python 3.9+. If `pip install` or `pytest` prints an `urllib3`/`ssl` compatibility warning, your Python was built against LibreSSL instead of OpenSSL (common on macOS's preinstalled Python) — install Python via [python.org](https://www.python.org/downloads/) or Homebrew instead and rebuild the venv with that one. The package declares `requires-python = ">=3.9"` and ruff targets `py39` syntax deliberately — that's a compatibility floor, so don't use syntax newer than 3.10 without `from __future__ import annotations` at the top of the file (see Gotchas).
 
 `adversity "player name"` also works directly (skips the name prompt). Either way, every run then asks whether to pull the player's whole career or one season — picking "one season" shows a numbered list of that player's real seasons (pulled live from `data.get_career_seasons`) to choose from, so there's no free-text season string to typo.
 
